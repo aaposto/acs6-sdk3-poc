@@ -20,7 +20,7 @@
               Search index (i.e. the indexed content and metadata)
              Configured in alfresco-global.properties with the 'dir.root' property.
               -->
-        <alfresco.data.location>${session.executionRootDirectory}/alf_data_dev</alfresco.data.location>
+        <alfresco.data.location>./alf_data_dev</alfresco.data.location>
 
         <!-- Duplicated with alfresco.solrHome in the plugin, we need them out here to do filtering -->
         <solr.home>${alfresco.data.location}/solr</solr.home>
@@ -33,8 +33,16 @@
         <!-- Alfresco Platform and Share webapp versions, these are the original Alfresco webapps that will be
              customized and then deployed and run by the tomcat maven plugin when
              executing for example $ mvn clean install alfresco:run -->
-        <alfresco.platform.version>5.2.f</alfresco.platform.version>
-        <alfresco.share.version>5.2.e</alfresco.share.version>
+        <alfresco.platform.version>6.0.5-ea</alfresco.platform.version>
+        <!--
+        This doesn't work unfortunately
+        see : https://github.com/Alfresco/alfresco-sdk/blob/master/plugins/alfresco-maven-plugin/src/main/java/org/alfresco/maven/plugin/AbstractRunMojo.java#L1620
+        The getter implementation always overrides this setting configured in https://github.com/Alfresco/alfresco-sdk/blob/master/plugins/alfresco-maven-plugin/src/main/java/org/alfresco/maven/plugin/AbstractRunMojo.java#L308
+        As a workaround download the war from Alfresco public repos and use this command to install it locally under a different alias :
+        mvn install:install-file -DgroupId=org.alfresco -DartifactId=alfresco-platform -Dversion=6.0.5-ea -Dpackaging=war -Dfile=/path/to/content-services-community-6.0.5-ea.war
+        -->
+        <alfresco.platform.war.artifactId>content-services-community</alfresco.platform.war.artifactId>
+        <alfresco.share.version>6.0.a</alfresco.share.version>
 
         <!-- Default is to run with a Community edition, change to 'enterprise' if using Enterprise edition -->
         <maven.alfresco.edition>community</maven.alfresco.edition>
@@ -81,14 +89,19 @@
         <dependency>
             <groupId>${alfresco.groupId}</groupId>
             <artifactId>alfresco-repository</artifactId>
+            <version>6.37</version>
+            <scope>provided</scope>
         </dependency>
-
-        <!-- Bring in Spring Context so we can use ApplicationContext, ApplicationContextAware etc -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>3.2.17.RELEASE</version>
-            <scope>test</scope>
+            <groupId>org.alfresco</groupId>
+            <artifactId>alfresco-remote-api</artifactId>
+            <version>6.23</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.4.1212</version>
         </dependency>
 
         <!-- Bring in Alfresco RAD so we get access to AlfrescoTestRunner classes -->
@@ -108,6 +121,7 @@
                  NOTE: It defaults to the latest version this SDK pom has been tested with,
                        but alfresco version can/should be overridden in your project's pom
             -->
+            <!--
             <dependency>
                 <groupId>${alfresco.groupId}</groupId>
                 <artifactId>alfresco-platform-distribution</artifactId>
@@ -115,6 +129,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            -->
             <!-- Redefine the following Share dependencies as they have different version numbers than platform.
                  They are defined in alfresco-platform-distribution... -->
             <dependency>
@@ -281,11 +296,11 @@
                 <configuration>
 
                     <!-- We need the flat file H2 database to run the Repo -->
-                    <enableH2>true</enableH2>
+                    <enablePostgreSQL>true</enablePostgreSQL>
                     <!-- We always need the Platform/Repo webapp - alfresco.war -->
                     <enablePlatform>true</enablePlatform>
                     <!-- Enable Solr webapp so we can use search -->
-                    <enableSolr>true</enableSolr>
+                    <enableSolr>false</enableSolr>
                     <!-- We need Share webapp, so we got a UI for working with the Repo -->
                     <enableShare>true</enableShare>
                     <!-- Enable the REST API Explorer -->
